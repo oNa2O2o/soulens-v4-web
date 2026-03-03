@@ -1524,8 +1524,46 @@
         let historyData = JSON.parse(localStorage.getItem('seedance_history') || '[]');
         let generatedPrompts = []; // 存储生成的提示词用于导出
 
+        // ==================== 默认 API 配置 ====================
+        // 在此处配置默认 API，用户首次打开时自动填充
+        const DEFAULT_API_CONFIG = {
+            platformId: 'siliconflow',  // 默认平台: siliconflow (免费额度)
+            // platformId: 'qwen',       // 备选: 通义千问
+            // platformId: 'deepseek',   // 备选: DeepSeek
+            endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
+            model: 'deepseek-ai/DeepSeek-V3',
+            mode: 'openai',
+            key: '',  // 留空，用户需自行填写
+            autoSafety: true,
+            autoSound: true,
+            autoPreview: false
+        };
+
+        // ==================== 应用默认配置（首次访问）====================
+        function applyDefaultConfig() {
+            const existing = localStorage.getItem('seedance_settings');
+            if (!existing) {
+                // 首次访问，应用默认配置
+                console.log('[SoulLens] 首次访问，应用默认 API 配置:', DEFAULT_API_CONFIG.platformId);
+                
+                localStorage.setItem('seedance_settings', JSON.stringify(DEFAULT_API_CONFIG));
+                
+                // 设置默认平台 Key（空值）
+                const allKeys = {};
+                allKeys[DEFAULT_API_CONFIG.platformId] = DEFAULT_API_CONFIG.key;
+                localStorage.setItem('seedance_keys', JSON.stringify(allKeys));
+                
+                console.log('[SoulLens] 默认配置已保存，平台:', DEFAULT_API_CONFIG.platformId);
+            } else {
+                console.log('[SoulLens] 已存在用户配置，保留用户设置');
+            }
+        }
+
         // ==================== 初始化 ====================
         function init() {
+            // 先应用默认配置（如果是首次访问）
+            applyDefaultConfig();
+            
             renderDirectors();
             renderBatchSelection();
             renderFusionSelection();
@@ -1538,6 +1576,9 @@
             document.getElementById('plotInput').addEventListener('input', function() {
                 document.getElementById('charCount').textContent = this.value.length;
             });
+            
+            // 显示配置提示
+            console.log('[SoulLens] 初始化完成，当前平台:', currentPlatformId);
         }
 
         // ==================== 视频时长控制器 ====================
