@@ -1539,22 +1539,8 @@
 
         // ==================== 应用默认配置（首次访问）====================
         function applyDefaultConfig() {
-            const existing = localStorage.getItem('seedance_settings');
-            if (!existing) {
-                // 首次访问，应用默认配置
-                console.log('[SoulLens] 首次访问，应用默认 API 配置:', DEFAULT_API_CONFIG.platformId);
-                
-                localStorage.setItem('seedance_settings', JSON.stringify(DEFAULT_API_CONFIG));
-                
-                // 设置默认平台 Key（空值）
-                const allKeys = {};
-                allKeys[DEFAULT_API_CONFIG.platformId] = DEFAULT_API_CONFIG.key;
-                localStorage.setItem('seedance_keys', JSON.stringify(allKeys));
-                
-                console.log('[SoulLens] 默认配置已保存，平台:', DEFAULT_API_CONFIG.platformId);
-            } else {
-                console.log('[SoulLens] 已存在用户配置，保留用户设置');
-            }
+            console.log('[SoulLens] 默认 API 配置:', DEFAULT_API_CONFIG.platformId, DEFAULT_API_CONFIG.model);
+            // 配置由 loadSettings 统一处理，这里只记录日志
         }
 
         // ==================== 初始化 ====================
@@ -2189,22 +2175,27 @@
 
         function loadSettings() {
             const saved = localStorage.getItem('seedance_settings');
-            if (!saved) {
-                // 首次打开：渲染默认平台
-                renderPlatformGrid();
-                selectPlatform('qwen');
-                return;
+            
+            // 使用默认配置（无论是首次还是后续访问）
+            let s = DEFAULT_API_CONFIG;
+            
+            if (saved) {
+                // 有保存的设置，合并到默认配置
+                const userSettings = JSON.parse(saved);
+                // 只有当用户修改过关键设置时才使用用户设置
+                if (userSettings.key && userSettings.key !== DEFAULT_API_CONFIG.key) {
+                    s = userSettings;
+                }
             }
-
-            const s = JSON.parse(saved);
+            
             renderPlatformGrid();
 
-            // 恢复平台选择
-            const pid = s.platformId || detectPlatformFromEndpoint(s.endpoint);
+            // 设置平台选择
+            const pid = s.platformId || 'siliconflow';
             currentPlatformId = pid;
             selectPlatform(pid);
 
-            // 恢复模型
+            // 设置模型
             const sel = document.getElementById('modelSelect');
             const p = PLATFORMS.find(x => x.id === pid);
             if (p) {
@@ -2214,26 +2205,28 @@
                 } else {
                     sel.value = 'custom';
                     document.getElementById('modelCustomInput').classList.remove('hidden');
-                    document.getElementById('modelCustomInput').value = s.model || '';
+                    document.getElementById('modelCustomInput').value = s.model || DEFAULT_API_CONFIG.model;
                 }
             }
 
-            // 恢复自定义端点
+            // 设置自定义端点
             if (pid === 'custom' && s.endpoint) {
                 document.getElementById('customEndpoint').value = s.endpoint;
             }
 
-            // 恢复 Key（优先读取独立 Key 存储，兼容旧格式）
-            const allKeys = JSON.parse(localStorage.getItem('seedance_keys') || '{}');
-            document.getElementById('apiKey').value = allKeys[pid] || s.key || '';
+            // 设置 API Key（优先使用默认配置中的 Key）
+            const apiKeyInput = document.getElementById('apiKey');
+            apiKeyInput.value = s.key || DEFAULT_API_CONFIG.key || '';
 
-            // 恢复功能开关
+            // 设置功能开关
             if (s.autoSafety !== undefined) document.getElementById('autoSafetyCheck').checked = s.autoSafety;
             if (s.autoSound !== undefined) document.getElementById('autoSoundEffect').checked = s.autoSound;
             if (s.autoPreview !== undefined) document.getElementById('autoPreview').checked = s.autoPreview;
 
-            // 更新状态
+            // 更新顶部状态显示
             updateApiStatusBadge(s);
+            
+            console.log('[SoulLens] Settings loaded:', { platform: pid, model: s.model });
         }
 
         function detectPlatformFromEndpoint(endpoint) {
