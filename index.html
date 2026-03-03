@@ -1527,13 +1527,11 @@
         // ==================== 默认 API 配置 ====================
         // 在此处配置默认 API，用户首次打开时自动填充
         const DEFAULT_API_CONFIG = {
-            platformId: 'siliconflow',  // 默认平台: siliconflow (免费额度)
-            // platformId: 'qwen',       // 备选: 通义千问
-            // platformId: 'deepseek',   // 备选: DeepSeek
+            platformId: 'siliconflow',  // 默认平台: siliconflow
             endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
-            model: 'deepseek-ai/DeepSeek-V3',
+            model: 'deepseek-ai/DeepSeek-V3.2',  // 默认模型: DeepSeek-V3.2
             mode: 'openai',
-            key: '',  // 留空，用户需自行填写
+            key: 'sk-onmzxgvlqbsmukdtbznppsjpyttgtpkhkobunmgyrcxanjyv',  // 默认 API Key
             autoSafety: true,
             autoSound: true,
             autoPreview: false
